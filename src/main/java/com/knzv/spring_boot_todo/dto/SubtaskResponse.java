@@ -2,19 +2,14 @@ package com.knzv.spring_boot_todo.dto;
 
 import lombok.*;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TaskResponse {
+public class SubtaskResponse {
     private Long id;
     private String text;
-    private String description;
     private boolean status;
-    private LocalDate deadlineDate;
-    private LocalDate creationDate;
-    private String userEmail;
+    private Long taskParentId;
 }

@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Getter
 @Setter
-public class TaskDto {
+public class TaskRequest {
     @NotNull
     private String text;
     private String description;

@@ -1,6 +1,6 @@
 package com.knzv.spring_boot_todo.service;
 
-import com.knzv.spring_boot_todo.dto.TaskDto;
+import com.knzv.spring_boot_todo.dto.TaskRequest;
 import com.knzv.spring_boot_todo.dto.TaskResponse;
 import com.knzv.spring_boot_todo.model.Task;
 import com.knzv.spring_boot_todo.model.User;
@@ -25,7 +25,7 @@ public class TaskService {
     private UserRepository userRepository;
 
 
-    public Task createTask(TaskDto request) {
+    public Task createTask(TaskRequest request) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь с такой почтой не найден"));
 
@@ -47,11 +47,13 @@ public class TaskService {
 
         return tasksList.stream()
                 .map(taskEntity -> TaskResponse.builder()
+                        .id(taskEntity.getId())
                         .text(taskEntity.getText())
                         .status(taskEntity.isStatus())
                         .description(taskEntity.getDescription())
                         .creationDate(taskEntity.getCreationDate())
                         .deadlineDate(taskEntity.getDeadlineDate())
+                        .userEmail(taskEntity.getUser().getEmail())
                         .build()
                 ).collect(Collectors.toList());
     }
@@ -59,12 +61,57 @@ public class TaskService {
     public TaskResponse getTaskById(Long id) {
         Task task = taskRepository.findById(id).orElseThrow(() -> new NullPointerException("Задача не найдена"));
         TaskResponse response = TaskResponse.builder()
+                .id(task.getId())
+                .text(task.getText())
+                .description(task.getDescription())
+                .status(task.isStatus())
+                .creationDate(task.getCreationDate())
+                .deadlineDate(task.getDeadlineDate())
+                .userEmail(task.getUser().getEmail())
+                .build();
+        return response;
+    }
+
+    public TaskResponse setTaskCheckedById(Long id) {
+        Task task = taskRepository.findById(id).orElseThrow(() -> new NullPointerException("Задача не найдена"));
+
+        task.setStatus(!task.isStatus());
+
+        task = taskRepository.save(task);
+
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь с такой почтой не найден"));
+
+        TaskResponse taskResponse = TaskResponse.builder()
+                .id(task.getId())
+                .text(task.getText())
+                .status(task.isStatus())
+                .userEmail(user.getEmail())
+                .build();
+        return taskResponse;
+    }
+
+    public TaskResponse updateTaskById(Long id, TaskRequest request) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new NullPointerException("Задача не найдена"));
+        task.setText(request.getText());
+        task.setDescription(request.getDescription());
+        task.setDeadlineDate(request.getDeadlineDate());
+
+        task = taskRepository.save(task);
+
+        TaskResponse taskResponse = TaskResponse.builder()
+                .id(task.getId())
                 .text(task.getText())
                 .description(task.getDescription())
                 .status(task.isStatus())
                 .creationDate(task.getCreationDate())
                 .deadlineDate(task.getDeadlineDate())
                 .build();
-        return response;
+        return taskResponse;
+    }
+
+    public void deleteTaskById(Long id) {
+        taskRepository.deleteById(id);
     }
 }
