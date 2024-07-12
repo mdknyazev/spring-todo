@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -24,20 +25,15 @@ public class Task {
     private String text;
     private String description;
     private boolean status;
-    @Column(name = "creation_date",nullable = false)
-    private Date creationDate;
-    @Column(name = "deadline_date", nullable = false)
-    private Date deadlineDate;
+    @Column(name = "creation_date", columnDefinition = "DATE DEFAULT CURRENT_DATE")
+    private LocalDate creationDate;
+    @Column(name = "deadline_date")
+    private LocalDate deadlineDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @ToString.Exclude
     private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    @ToString.Exclude
-    private Category category;
 
     @OneToMany(mappedBy = "task")
     @ToString.Exclude
