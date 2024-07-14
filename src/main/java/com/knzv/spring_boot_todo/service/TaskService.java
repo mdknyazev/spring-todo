@@ -2,6 +2,8 @@ package com.knzv.spring_boot_todo.service;
 
 import com.knzv.spring_boot_todo.dto.TaskRequest;
 import com.knzv.spring_boot_todo.dto.TaskResponse;
+import com.knzv.spring_boot_todo.exception.InvalidTaskException;
+import com.knzv.spring_boot_todo.exception.TaskNotExistsException;
 import com.knzv.spring_boot_todo.model.Task;
 import com.knzv.spring_boot_todo.model.User;
 import com.knzv.spring_boot_todo.repository.TaskRepository;
@@ -26,6 +28,11 @@ public class TaskService {
 
 
     public Task createTask(TaskRequest request) {
+
+        if (request.getText().isEmpty()) {
+            throw new InvalidTaskException("Обязательное поле текст");
+        }
+
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь с такой почтой не найден"));
 
@@ -59,7 +66,8 @@ public class TaskService {
     }
 
     public TaskResponse getTaskById(Long id) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new NullPointerException("Задача не найдена"));
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotExistsException("Задача не найдена"));
         TaskResponse response = TaskResponse.builder()
                 .id(task.getId())
                 .text(task.getText())
@@ -73,14 +81,16 @@ public class TaskService {
     }
 
     public TaskResponse setTaskCheckedById(Long id) {
-        Task task = taskRepository.findById(id).orElseThrow(() -> new NullPointerException("Задача не найдена"));
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotExistsException("Задача не найдена"));
 
         task.setStatus(!task.isStatus());
 
         task = taskRepository.save(task);
 
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UsernameNotFoundException("Пользователь с такой почтой не найден"));
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь с такой почтой не найден"));
 
         TaskResponse taskResponse = TaskResponse.builder()
                 .id(task.getId())
@@ -92,8 +102,13 @@ public class TaskService {
     }
 
     public TaskResponse updateTaskById(Long id, TaskRequest request) {
+
+        if (request.getText().isEmpty()) {
+            throw new InvalidTaskException("Обязательное поле текст");
+        }
+
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new NullPointerException("Задача не найдена"));
+                .orElseThrow(() -> new TaskNotExistsException("Задача не найдена"));
         task.setText(request.getText());
         task.setDescription(request.getDescription());
         task.setDeadlineDate(request.getDeadlineDate());

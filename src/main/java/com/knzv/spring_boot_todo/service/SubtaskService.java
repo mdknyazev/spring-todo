@@ -2,6 +2,8 @@ package com.knzv.spring_boot_todo.service;
 
 import com.knzv.spring_boot_todo.dto.SubtaskRequest;
 import com.knzv.spring_boot_todo.dto.SubtaskResponse;
+import com.knzv.spring_boot_todo.exception.InvalidTaskException;
+import com.knzv.spring_boot_todo.exception.TaskNotExistsException;
 import com.knzv.spring_boot_todo.model.Subtask;
 import com.knzv.spring_boot_todo.model.Task;
 import com.knzv.spring_boot_todo.repository.SubtaskRepository;
@@ -20,7 +22,13 @@ public class SubtaskService {
     private TaskRepository taskRepository;
 
     public SubtaskResponse create(Long taskParentId, SubtaskRequest request) {
-        Task taskParent = taskRepository.findById(taskParentId).orElseThrow(() -> new NullPointerException("Задача не найдена"));
+
+        if (request.getText().isEmpty()) {
+            throw new InvalidTaskException("Обязательное поле текст");
+        }
+
+        Task taskParent = taskRepository.findById(taskParentId)
+                .orElseThrow(() -> new TaskNotExistsException("Подзадача не найдена"));
 
         Subtask subtask = Subtask.builder()
                 .text(request.getText())
@@ -58,7 +66,8 @@ public class SubtaskService {
     }
 
     public SubtaskResponse setSubtaskCheckedById(Long id) {
-        Subtask subtask = subtaskRepository.findById(id).orElseThrow(() -> new NullPointerException("Подзадача не найдена"));
+        Subtask subtask = subtaskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotExistsException("Подзадача не найдена"));
 
         subtask.setStatus(!subtask.isStatus());
 
@@ -74,7 +83,12 @@ public class SubtaskService {
     }
 
     public SubtaskResponse updateSubtask(Long id, SubtaskRequest request) {
-        Subtask subtask = subtaskRepository.findById(id).orElseThrow(() -> new NullPointerException("Подзадача не найдена"));
+        if (request.getText().isEmpty()) {
+            throw new InvalidTaskException("Обязательное поле текст");
+        }
+
+        Subtask subtask = subtaskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotExistsException("Подзадача не найдена"));
 
         subtask.setText(request.getText());
 

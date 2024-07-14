@@ -5,6 +5,7 @@ import com.knzv.spring_boot_todo.model.Task;
 import com.knzv.spring_boot_todo.repository.SubtaskRepository;
 import com.knzv.spring_boot_todo.service.TaskService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,6 @@ public class TaskController {
     @PostMapping("/create")
     public ResponseEntity<?> createTask(@RequestBody TaskRequest request) {
         Task task = taskService.createTask(request);
-
         return new ResponseEntity<>(task, HttpStatus.CREATED);
     }
 

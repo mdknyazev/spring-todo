@@ -1,9 +1,11 @@
 package com.knzv.spring_boot_todo.controller;
 
-import com.knzv.spring_boot_todo.dto.RegistrationRequest;
+
+import com.knzv.spring_boot_todo.dto.TokenResponse;
+import com.knzv.spring_boot_todo.dto.UserRequest;
+import com.knzv.spring_boot_todo.dto.UserResponse;
 import com.knzv.spring_boot_todo.exception.UserAlreadyExistsException;
 import com.knzv.spring_boot_todo.service.UserService;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,19 +18,14 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
-        try {
-            var user = userService.register(request);
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
-        }
-        catch (UserAlreadyExistsException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> register(@RequestBody UserRequest request) {
+        UserResponse response = userService.register(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody RegistrationRequest request) {
-        String accessToken = userService.login(request);
-        return new ResponseEntity<>(accessToken, HttpStatus.OK);
+    public ResponseEntity<?> login(@RequestBody UserRequest request) {
+        TokenResponse response = userService.login(request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
