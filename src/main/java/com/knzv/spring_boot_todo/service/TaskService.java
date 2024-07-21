@@ -11,6 +11,7 @@ import com.knzv.spring_boot_todo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,6 @@ public class TaskService {
     private TaskRepository taskRepository;
     @Autowired
     private UserRepository userRepository;
-
 
     public Task createTask(TaskRequest request) {
 
@@ -50,7 +50,14 @@ public class TaskService {
     }
 
     public List<TaskResponse> getAllTasks() {
-        List<Task> tasksList = taskRepository.findAll();
+
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Пользователь с такой почтой не найден")
+                );
+
+        List<Task> tasksList = taskRepository.findByUserId(user.getId());
 
         return tasksList.stream()
                 .map(taskEntity -> TaskResponse.builder()
@@ -66,7 +73,14 @@ public class TaskService {
     }
 
     public TaskResponse getTaskById(Long id) {
-        Task task = taskRepository.findById(id)
+
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Пользователь с такой почтой не найден")
+                );
+
+        Task task = taskRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new TaskNotExistsException("Задача не найдена"));
         TaskResponse response = TaskResponse.builder()
                 .id(task.getId())
@@ -81,16 +95,18 @@ public class TaskService {
     }
 
     public TaskResponse setTaskCheckedById(Long id) {
-        Task task = taskRepository.findById(id)
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Пользователь с такой почтой не найден")
+                );
+
+        Task task = taskRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new TaskNotExistsException("Задача не найдена"));
 
         task.setStatus(!task.isStatus());
 
         task = taskRepository.save(task);
-
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь с такой почтой не найден"));
 
         TaskResponse taskResponse = TaskResponse.builder()
                 .id(task.getId())
@@ -103,11 +119,17 @@ public class TaskService {
 
     public TaskResponse updateTaskById(Long id, TaskRequest request) {
 
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Пользователь с такой почтой не найден")
+                );
+
         if (request.getText().isEmpty()) {
             throw new InvalidTaskException("Обязательное поле текст");
         }
 
-        Task task = taskRepository.findById(id)
+        Task task = taskRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new TaskNotExistsException("Задача не найдена"));
         task.setText(request.getText());
         task.setDescription(request.getDescription());
@@ -127,6 +149,13 @@ public class TaskService {
     }
 
     public void deleteTaskById(Long id) {
-        taskRepository.deleteById(id);
+
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(
+                        () -> new UsernameNotFoundException("Пользователь с такой почтой не найден")
+                );
+
+        taskRepository.deleteByIdAndUserId(id, user.getId());
     }
 }
